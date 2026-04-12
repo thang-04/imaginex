@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="none">
+  <defs>
+    <linearGradient id="iconGrad" x1="56" y1="40" x2="208" y2="212" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#61d9ff" />
+      <stop offset="0.5" stop-color="#56b7ff" />
+      <stop offset="1" stop-color="#a16bff" />
+    </linearGradient>
+    <linearGradient id="iconCore" x1="92" y1="68" x2="164" y2="198" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#d4f7ff" />
+      <stop offset="1" stop-color="#91ccff" />
+    </linearGradient>
+    <filter id="glow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="2.6" result="blur" />
+      <feColorMatrix
+        in="blur"
+        type="matrix"
+        values="1 0 0 0 0.18  0 1 0 0 0.28  0 0 1 0 0.55  0 0 0 0.85 0"
+        result="glow"
+      />
+      <feMerge>
+        <feMergeNode in="glow" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+  </defs>
+
+  <g filter="url(#glow)" stroke="url(#iconGrad)" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M128 40V78" stroke-width="6" />
+    <path d="M128 78L102 96" stroke-width="5" />
+    <path d="M128 78L154 96" stroke-width="5" />
+    <path d="M102 96L80 112" stroke-width="4.5" />
+    <path d="M102 96L116 104" stroke-width="4.5" />
+    <path d="M154 96L140 104" stroke-width="4.5" />
+    <path d="M154 96L176 112" stroke-width="4.5" />
+    <path d="M80 112L96 126" stroke-width="4" />
+    <path d="M116 104L110 132" stroke-width="4" />
+    <path d="M140 104L146 132" stroke-width="4" />
+    <path d="M176 112L160 126" stroke-width="4" />
+    <path d="M96 126L82 148" stroke-width="4" />
+    <path d="M110 132L98 162" stroke-width="4" />
+    <path d="M146 132L158 162" stroke-width="4" />
+    <path d="M160 126L174 148" stroke-width="4" />
+    <path d="M98 162L118 178" stroke-width="4" />
+    <path d="M158 162L138 178" stroke-width="4" />
+    <path d="M118 178L128 206" stroke-width="6" />
+    <path d="M138 178L128 206" stroke-width="6" />
+    <path d="M110 150H146" stroke-width="3.5" opacity="0.85" />
+    <path d="M88 142L118 150" stroke-width="3" opacity="0.7" />
+    <path d="M168 142L138 150" stroke-width="3" opacity="0.7" />
+  </g>
+
+  <g fill="url(#iconCore)" stroke="#0f1a3c" stroke-opacity="0.35" stroke-width="3">
+    <circle cx="128" cy="40" r="7" />
+    <circle cx="102" cy="96" r="6" />
+    <circle cx="154" cy="96" r="6" />
+    <circle cx="80" cy="112" r="5.5" />
+    <circle cx="116" cy="104" r="5.5" />
+    <circle cx="140" cy="104" r="5.5" />
+    <circle cx="176" cy="112" r="5.5" />
+    <circle cx="96" cy="126" r="5" />
+    <circle cx="110" cy="132" r="5" />
+    <circle cx="146" cy="132" r="5" />
+    <circle cx="160" cy="126" r="5" />
+    <circle cx="98" cy="162" r="5" />
+    <circle cx="158" cy="162" r="5" />
+    <circle cx="118" cy="178" r="5.5" />
+    <circle cx="138" cy="178" r="5.5" />
+    <circle cx="128" cy="206" r="8" />
+  </g>
+</svg>
