@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { getMessages, isLocale, DEFAULT_LOCALE, type Locale } from '@/lib/i18n';
 import { type GenerationAction, type GenerationStyle } from '@/lib/image-generation';
 
 export const runtime = 'nodejs';
@@ -9,6 +10,7 @@ type RewritePromptRequest = {
   mode?: 'text-to-image' | 'image-to-image';
   action?: GenerationAction;
   style?: GenerationStyle;
+  locale?: string;
 };
 
 type CloudflareTextResponse = {
@@ -34,12 +36,10 @@ function getEnvValue(...names: string[]): string | undefined {
   return undefined;
 }
 
-function getCloudflareToken(): string {
+function getCloudflareToken(locale: Locale): string {
   const token = getEnvValue('CLOUDFLARE_API_TOKEN', 'CLOUDFLARE_AUTH_TOKEN');
   if (!token) {
-    throw new Error(
-      'Missing Cloudflare token. Set CLOUDFLARE_API_TOKEN (or CLOUDFLARE_AUTH_TOKEN).',
-    );
+    throw new Error(getMessages(locale).errors.missingCloudflareToken);
   }
 
   return token.replace(/^Bearer\s+/i, '').trim();
@@ -55,7 +55,7 @@ function getAccountIdFromApiUrl(): string | undefined {
   return match?.[1];
 }
 
-function getCloudflareTextApiUrl(): string {
+function getCloudflareTextApiUrl(locale: Locale): string {
   const explicitUrl = getEnvValue('CLOUDFLARE_TEXT_API_URL');
   if (explicitUrl) {
     return explicitUrl;
@@ -63,9 +63,7 @@ function getCloudflareTextApiUrl(): string {
 
   const accountId = getEnvValue('CLOUDFLARE_ACCOUNT_ID') || getAccountIdFromApiUrl();
   if (!accountId) {
-    throw new Error(
-      'Missing Cloudflare text endpoint configuration. Set CLOUDFLARE_TEXT_API_URL or CLOUDFLARE_ACCOUNT_ID.',
-    );
+    throw new Error(getMessages(locale).errors.missingCloudflareTextEndpoint);
   }
 
   const modelId = getEnvValue('CLOUDFLARE_TEXT_MODEL_ID') || '@cf/zai-org/glm-4.7-flash';
@@ -206,8 +204,12 @@ function buildUserInstruction({
 }
 
 export async function POST(request: Request) {
+  let locale: Locale = DEFAULT_LOCALE;
+
   try {
     const body = (await request.json()) as RewritePromptRequest;
+    locale = isLocale(body.locale) ? body.locale : DEFAULT_LOCALE;
+    const messages = getMessages(locale);
     const prompt = body.prompt?.trim() || '';
     const mode = body.mode === 'image-to-image' ? 'image-to-image' : 'text-to-image';
     const action = body.action?.trim() || 'create';
@@ -215,13 +217,13 @@ export async function POST(request: Request) {
 
     if (!prompt) {
       return NextResponse.json(
-        { error: 'Prompt is required to generate an optimized prompt.' },
+        { error: messages.errors.promptRequiredForOptimization },
         { status: 400 },
       );
     }
 
-    const apiUrl = getCloudflareTextApiUrl();
-    const authToken = getCloudflareToken();
+    const apiUrl = getCloudflareTextApiUrl(locale);
+    const authToken = getCloudflareToken(locale);
     const cloudflareRequestBody = {
       messages: [
         {
@@ -260,10 +262,7 @@ export async function POST(request: Request) {
 
     if (!cloudflareResponse.ok || payload?.success === false) {
       const errorMessage =
-        getCloudflareErrorMessage(payload) ||
-        rawResponse ||
-        cloudflareResponse.statusText ||
-        'Prompt rewrite request failed.';
+        getCloudflareErrorMessage(payload) || rawResponse || messages.errors.promptRewriteFailed;
 
       return NextResponse.json(
         { error: errorMessage },
@@ -274,7 +273,7 @@ export async function POST(request: Request) {
     const suggestedPrompt = extractSuggestedPrompt(payload);
     if (!suggestedPrompt) {
       return NextResponse.json(
-        { error: 'Prompt rewrite response did not include content.' },
+        { error: messages.errors.promptRewriteMissingContent },
         { status: 502 },
       );
     }
@@ -282,14 +281,15 @@ export async function POST(request: Request) {
     const sanitized = sanitizePrompt(suggestedPrompt);
     if (!sanitized) {
       return NextResponse.json(
-        { error: 'Prompt rewrite returned empty output after sanitization.' },
+        { error: messages.errors.promptRewriteEmptyOutput },
         { status: 502 },
       );
     }
 
     return NextResponse.json({ prompt: sanitized });
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Unexpected server error.';
+    const message =
+      error instanceof Error ? error.message : getMessages(locale).errors.unexpectedServerError;
 
     return NextResponse.json(
       { error: message },

@@ -20,6 +20,7 @@ node_modules
 .turbo/
 coverage/
 out/
+test-results/
 *.log
 npm-debug.log*
 pnpm-debug.log*
@@ -36,6 +37,7 @@ __pycache__/
 # Local agent and junk files
 .agent/
 .agents/
+.tmp/
 *.tmp
 *.temp
 *.bak

@@ -1,5 +1,12 @@
 import { NextResponse } from 'next/server';
 import {
+  DEFAULT_LOCALE,
+  getMessages,
+  isLocale,
+  type Locale,
+  type Messages,
+} from '@/lib/i18n';
+import {
   buildPrompt,
   LOCKED_STEPS,
   normalizeSeed,
@@ -39,6 +46,11 @@ function readMode(formData: FormData): GenerationMode {
   return readString(formData, 'mode') === 'image-to-image' ? 'image-to-image' : 'text-to-image';
 }
 
+function readLocale(formData: FormData): Locale {
+  const value = readString(formData, 'locale');
+  return isLocale(value) ? value : DEFAULT_LOCALE;
+}
+
 function readInputImages(formData: FormData): File[] {
   const files: File[] = [];
 
@@ -52,11 +64,31 @@ function readInputImages(formData: FormData): File[] {
   return files;
 }
 
+function localizeServerMessage(rawMessage: string, messages: Messages): string {
+  switch (rawMessage) {
+    case 'Missing Cloudflare token. Set CLOUDFLARE_API_TOKEN (preferred) or CLOUDFLARE_AUTH_TOKEN.':
+      return messages.errors.missingCloudflareToken;
+    case 'Missing Cloudflare endpoint configuration. Set CLOUDFLARE_API_URL or CLOUDFLARE_ACCOUNT_ID.':
+      return messages.errors.missingCloudflareImageEndpoint;
+    case 'Cloudflare request failed.':
+      return messages.errors.cloudflareRequestFailed;
+    case 'Cloudflare response did not include an image.':
+      return messages.errors.cloudflareNoImage;
+    default:
+      return rawMessage;
+  }
+}
+
 export async function POST(request: Request) {
+  let locale: Locale = DEFAULT_LOCALE;
+  let mode: GenerationMode = 'text-to-image';
+
   try {
     const formData = await request.formData();
+    locale = readLocale(formData);
+    const messages = getMessages(locale);
     const prompt = readString(formData, 'prompt');
-    const mode = readMode(formData);
+    mode = readMode(formData);
     const action = (readString(formData, 'action') || 'create') as GenerationAction;
     const style = (readString(formData, 'style') || 'cinematic') as GenerationStyle;
     const imageSize = readString(formData, 'imageSize') || readString(formData, 'size') || '1024x1024';
@@ -66,7 +98,7 @@ export async function POST(request: Request) {
 
     if (!prompt.trim() && mode === 'text-to-image') {
       return NextResponse.json(
-        { error: 'Prompt is required for text-to-image.' },
+        { error: messages.errors.promptRequiredTextToImage },
         { status: 400 },
       );
     }
@@ -105,11 +137,30 @@ export async function POST(request: Request) {
       },
     });
   } catch (error) {
+    const messages = getMessages(locale);
+
     if (error instanceof CloudflareGenerationError) {
-      return NextResponse.json(error.toResponseBody(), { status: error.status });
+      const localizedError =
+        error.code === 'CONTENT_FLAGGED'
+          ? mode === 'image-to-image'
+            ? messages.errors.contentFlaggedImageToImage
+            : messages.errors.contentFlaggedTextToImage
+          : localizeServerMessage(error.message, messages);
+
+      return NextResponse.json(
+        {
+          code: error.code,
+          error: localizedError,
+          requestId: error.requestId,
+        },
+        { status: error.status },
+      );
     }
 
-    const message = error instanceof Error ? error.message : 'Unexpected server error.';
+    const message =
+      error instanceof Error
+        ? localizeServerMessage(error.message, messages)
+        : messages.errors.unexpectedServerError;
 
     return NextResponse.json(
       { error: message },

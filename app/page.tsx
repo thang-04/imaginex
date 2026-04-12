@@ -2,9 +2,10 @@
 
 import { useState } from 'react';
 import { Copyright } from 'lucide-react';
-import PromptInput from '@/components/prompt-input';
-import ImageCanvas from '@/components/image-canvas';
 import ControlPanel from '@/components/control-panel';
+import ImageCanvas from '@/components/image-canvas';
+import { useLanguage } from '@/components/language-provider';
+import PromptInput from '@/components/prompt-input';
 import {
   DEFAULT_SETTINGS,
   parseImageSize,
@@ -13,6 +14,7 @@ import {
 } from '@/lib/image-generation';
 
 export default function Home() {
+  const { locale, setLocale, messages } = useLanguage();
   const [mode, setMode] = useState<'text-to-image' | 'image-to-image'>('text-to-image');
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedImages, setGeneratedImages] = useState<string[]>([]);
@@ -50,6 +52,7 @@ export default function Home() {
       formData.append('width', String(width));
       formData.append('height', String(height));
       formData.append('steps', String(settings.steps));
+      formData.append('locale', locale);
 
       if (settings.seed >= 0) {
         formData.append('seed', String(settings.seed));
@@ -66,31 +69,27 @@ export default function Home() {
 
       const data = (await response.json()) as {
         error?: string;
-        code?: string;
         requestId?: string;
         dataUrl?: string;
         image?: string;
       };
 
       if (!response.ok) {
-        const reference = data.requestId ? ` (Ref: ${data.requestId})` : '';
-        const flaggedHint =
-          data.code === 'CONTENT_FLAGGED'
-            ? mode === 'image-to-image'
-              ? ' Update prompt/style or use another input image and try again.'
-              : ' Rephrase the prompt, choose a safer action/style, and try again.'
-            : '';
-        throw new Error(`${data.error || 'Image generation failed.'}${flaggedHint}${reference}`);
+        const reference = data.requestId
+          ? ` (${messages.errors.referenceLabel}: ${data.requestId})`
+          : '';
+        throw new Error(`${data.error || messages.errors.imageGenerationFailed}${reference}`);
       }
 
       const imageUrl = data.dataUrl || (data.image ? toImageDataUrl(data.image) : '');
       if (!imageUrl) {
-        throw new Error('The API response did not include an image.');
+        throw new Error(messages.errors.apiResponseMissingImage);
       }
 
       setGeneratedImages((previous) => [imageUrl, ...previous].slice(0, 24));
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Image generation failed.';
+      const message =
+        error instanceof Error ? error.message : messages.errors.imageGenerationFailed;
       setErrorMessage(message);
     } finally {
       setIsGenerating(false);
@@ -117,45 +116,61 @@ export default function Home() {
             <div className="flex min-w-0 items-center gap-4">
               <img
                 src="/logo_imaginex.svg"
-                alt="Imaginex logo"
+                alt={messages.app.logoAlt}
                 className="block h-11 w-auto max-w-[220px] select-none sm:h-12 sm:max-w-[250px]"
                 draggable={false}
               />
               <div className="min-w-0">
-                <h1 className="text-xl font-bold text-white sm:text-2xl">AI Generate Image Studio</h1>
-                <p className="text-sm text-slate-400">Prompt, tweak, preview and compare in one workflow.</p>
+                <h1 className="text-xl font-bold text-white sm:text-2xl">{messages.app.title}</h1>
+                <p className="text-sm text-slate-400">{messages.app.subtitle}</p>
               </div>
             </div>
 
             <div className="flex flex-col items-start gap-2 lg:items-end">
-              <div className="flex items-center gap-2 rounded-lg border border-slate-700/50 bg-slate-800/30 p-1">
-                <button
-                  type="button"
-                  onClick={() => handleModeChange('text-to-image')}
-                  className={`rounded-md px-4 py-2 text-sm font-medium transition-all ${
-                    mode === 'text-to-image'
-                      ? 'bg-brand-gradient text-white shadow-lg shadow-primary/20'
-                      : 'text-slate-300 hover:text-white'
-                  }`}
-                >
-                  Text to Image
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleModeChange('image-to-image')}
-                  className={`rounded-md px-4 py-2 text-sm font-medium transition-all ${
-                    mode === 'image-to-image'
-                      ? 'bg-brand-gradient text-white shadow-lg shadow-primary/20'
-                      : 'text-slate-300 hover:text-white'
-                  }`}
-                >
-                  Image to Image
-                </button>
+              <div className="flex flex-wrap items-center gap-3 lg:justify-end">
+                <div className="flex items-center gap-2 rounded-lg border border-slate-700/50 bg-slate-800/30 p-1">
+                  <button
+                    type="button"
+                    onClick={() => handleModeChange('text-to-image')}
+                    className={`rounded-md px-4 py-2 text-sm font-medium transition-all ${
+                      mode === 'text-to-image'
+                        ? 'bg-brand-gradient text-white shadow-lg shadow-primary/20'
+                        : 'text-slate-300 hover:text-white'
+                    }`}
+                  >
+                    {messages.app.textToImage}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleModeChange('image-to-image')}
+                    className={`rounded-md px-4 py-2 text-sm font-medium transition-all ${
+                      mode === 'image-to-image'
+                        ? 'bg-brand-gradient text-white shadow-lg shadow-primary/20'
+                        : 'text-slate-300 hover:text-white'
+                    }`}
+                  >
+                    {messages.app.imageToImage}
+                  </button>
+                </div>
+
+                <div className="flex items-center gap-1 rounded-lg border border-slate-700/50 bg-slate-800/30 p-1">
+                  {(['vi', 'en'] as const).map((nextLocale) => (
+                    <button
+                      key={nextLocale}
+                      type="button"
+                      onClick={() => setLocale(nextLocale)}
+                      className={`rounded-md px-3 py-2 text-xs font-semibold transition-all ${
+                        locale === nextLocale
+                          ? 'bg-brand-gradient text-white shadow-lg shadow-primary/20'
+                          : 'text-slate-300 hover:text-white'
+                      }`}
+                    >
+                      {nextLocale.toUpperCase()}
+                    </button>
+                  ))}
+                </div>
               </div>
-              <p className="text-xs text-slate-400">
-                Session gallery: <span className="font-semibold text-slate-200">{generatedImages.length}</span>{' '}
-                image{generatedImages.length === 1 ? '' : 's'}
-              </p>
+              <p className="text-xs text-slate-400">{messages.app.sessionGallery(generatedImages.length)}</p>
             </div>
           </div>
         </header>
@@ -197,7 +212,7 @@ export default function Home() {
 
         <footer className="flex items-center justify-center gap-1.5 pb-2 text-xs text-slate-500">
           <Copyright className="h-3.5 w-3.5" />
-          <span>Built by Thắng Nguyễn Duy</span>
+          <span>{messages.app.footer}</span>
         </footer>
       </div>
     </div>

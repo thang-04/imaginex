@@ -2,6 +2,7 @@
 
 import { type PointerEvent as ReactPointerEvent, useEffect, useRef, useState } from 'react';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
+import { useLanguage } from '@/components/language-provider';
 
 interface ImageCanvasProps {
   generatedImages: string[];
@@ -28,6 +29,7 @@ export default function ImageCanvas({
   mode,
   onClearHistory,
 }: ImageCanvasProps) {
+  const { messages } = useLanguage();
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const [lightboxZoom, setLightboxZoom] = useState(1);
@@ -64,7 +66,7 @@ export default function ImageCanvas({
     if (generatedImages[0]) {
       setSelectedIndex(0);
     }
-  }, [generatedImages[0]]);
+  }, [generatedImages]);
 
   useEffect(() => {
     if (lightboxZoom <= 1 && (lightboxPan.x !== 0 || lightboxPan.y !== 0)) {
@@ -97,17 +99,17 @@ export default function ImageCanvas({
     }
   };
 
-  const openLightbox = (index: number) => {
-    setSelectedIndex(index);
-    setLightboxIndex(index);
-    resetLightboxView();
-  };
-
   const resetLightboxView = () => {
     setLightboxZoom(1);
     setLightboxPan({ x: 0, y: 0 });
     setIsDragging(false);
     dragStateRef.current = null;
+  };
+
+  const openLightbox = (index: number) => {
+    setSelectedIndex(index);
+    setLightboxIndex(index);
+    resetLightboxView();
   };
 
   const adjustZoom = (delta: number) => {
@@ -186,8 +188,8 @@ export default function ImageCanvas({
           {isGenerating ? (
             <>
               <div className="h-12 w-12 animate-spin rounded-full border-4 border-slate-600 border-t-primary" />
-              <h3 className="mt-5 text-lg font-semibold text-white">Generating your image...</h3>
-              <p className="mt-2 text-sm text-slate-400">The canvas will update automatically.</p>
+              <h3 className="mt-5 text-lg font-semibold text-white">{messages.imageCanvas.generatingTitle}</h3>
+              <p className="mt-2 text-sm text-slate-400">{messages.imageCanvas.generatingHint}</p>
             </>
           ) : (
             <>
@@ -201,11 +203,11 @@ export default function ImageCanvas({
                   />
                 </svg>
               </div>
-              <h3 className="mt-5 text-lg font-semibold text-white">Preview will appear here</h3>
+              <h3 className="mt-5 text-lg font-semibold text-white">{messages.imageCanvas.emptyTitle}</h3>
               <p className="mt-2 max-w-md text-sm text-slate-400">
                 {mode === 'text-to-image'
-                  ? 'Write a prompt and generate your first image.'
-                  : 'Upload a source image, describe edits, then generate.'}
+                  ? messages.imageCanvas.emptyHintTextToImage
+                  : messages.imageCanvas.emptyHintImageToImage}
               </p>
             </>
           )}
@@ -218,9 +220,11 @@ export default function ImageCanvas({
     <div className="space-y-4">
       <div className="flex flex-col gap-3 rounded-2xl border border-slate-700/50 bg-slate-900/45 p-4 backdrop-blur-xl sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h3 className="text-sm font-semibold uppercase tracking-wider text-slate-200">Live Preview</h3>
+          <h3 className="text-sm font-semibold uppercase tracking-wider text-slate-200">
+            {messages.imageCanvas.livePreview}
+          </h3>
           <p className="mt-1 text-xs text-slate-400">
-            {generatedImages.length} image{generatedImages.length > 1 ? 's' : ''} in this session
+            {messages.imageCanvas.sessionImages(generatedImages.length)}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -229,7 +233,7 @@ export default function ImageCanvas({
             onClick={() => void handleDownload(selectedImage, selectedIndex)}
             className="rounded-lg border border-slate-600 bg-slate-800/70 px-3 py-2 text-xs font-semibold text-slate-100 transition-colors hover:bg-slate-700"
           >
-            Download
+            {messages.imageCanvas.download}
           </button>
           {onClearHistory ? (
             <button
@@ -237,7 +241,7 @@ export default function ImageCanvas({
               onClick={onClearHistory}
               className="rounded-lg border border-slate-700 bg-slate-900/70 px-3 py-2 text-xs font-semibold text-slate-300 transition-colors hover:bg-slate-800"
             >
-              Clear Gallery
+              {messages.imageCanvas.clearGallery}
             </button>
           ) : null}
         </div>
@@ -251,25 +255,27 @@ export default function ImageCanvas({
         <div className="aspect-[16/10] min-h-[380px] w-full md:min-h-[460px]">
           <img
             src={selectedImage}
-            alt={`Generated preview ${selectedIndex + 1}`}
+            alt={messages.imageCanvas.generatedPreviewAlt(selectedIndex)}
             className="h-full w-full object-contain"
           />
         </div>
         <div className="absolute right-3 top-3 rounded-md bg-black/60 px-2.5 py-1 text-xs text-slate-200">
-          Click to preview
+          {messages.imageCanvas.clickToPreview}
         </div>
         {isGenerating ? (
           <div className="absolute inset-0 flex items-center justify-center bg-slate-950/40 backdrop-blur-[2px]">
             <div className="flex items-center gap-2 rounded-lg border border-slate-700 bg-slate-900/90 px-3 py-2 text-xs text-slate-100">
               <div className="h-4 w-4 animate-spin rounded-full border-2 border-slate-600 border-t-primary" />
-              Generating next variation...
+              {messages.imageCanvas.generatingNextVariation}
             </div>
           </div>
         ) : null}
       </button>
 
       <div className="rounded-2xl border border-slate-700/50 bg-slate-900/45 p-4 backdrop-blur-xl">
-        <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-300">Gallery</h4>
+        <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-300">
+          {messages.imageCanvas.gallery}
+        </h4>
         <div className="mt-3 grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-4">
           {generatedImages.map((image, index) => (
             <button
@@ -285,13 +291,13 @@ export default function ImageCanvas({
               <div className="aspect-square w-full bg-slate-900">
                 <img
                   src={image}
-                  alt={`Generated image ${index + 1}`}
+                  alt={messages.imageCanvas.generatedImageAlt(index)}
                   className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
                 />
               </div>
               <div className="absolute inset-x-0 bottom-0 flex items-center justify-between bg-black/55 px-2 py-1 text-[11px] text-slate-200">
                 <span>#{index + 1}</span>
-                <span>View</span>
+                <span>{messages.imageCanvas.view}</span>
               </div>
             </button>
           ))}
@@ -308,10 +314,10 @@ export default function ImageCanvas({
         }}
       >
         <DialogContent
-          className="w-[min(98vw,1800px)] max-w-[min(98vw,1800px)] sm:max-w-[min(98vw,1800px)] border-slate-700 bg-slate-950 p-0"
+          className="w-[min(98vw,1800px)] max-w-[min(98vw,1800px)] border-slate-700 bg-slate-950 p-0 sm:max-w-[min(98vw,1800px)]"
           showCloseButton={false}
         >
-          <DialogTitle className="sr-only">Generated image lightbox preview</DialogTitle>
+          <DialogTitle className="sr-only">{messages.imageCanvas.lightboxTitle}</DialogTitle>
           {lightboxImage ? (
             <div className="relative">
               <div
@@ -334,7 +340,7 @@ export default function ImageCanvas({
                   <div style={{ transform: `translate(${lightboxPan.x}px, ${lightboxPan.y}px)` }}>
                     <img
                       src={lightboxImage}
-                      alt={`Lightbox preview ${lightboxIndex === null ? 0 : lightboxIndex + 1}`}
+                      alt={messages.imageCanvas.lightboxPreviewAlt(lightboxIndex ?? 0)}
                       className="max-h-[88vh] max-w-full object-contain transition-transform duration-150"
                       style={{ transform: `scale(${lightboxZoom})`, transformOrigin: 'center center' }}
                       draggable={false}
@@ -344,11 +350,11 @@ export default function ImageCanvas({
               </div>
 
               <div className="absolute left-3 top-3 rounded-md bg-black/65 px-3 py-1 text-xs text-slate-100">
-                {lightboxIndex === null ? 0 : lightboxIndex + 1} / {generatedImages.length}
+                {messages.imageCanvas.imageCounter((lightboxIndex ?? 0) + 1, generatedImages.length)}
               </div>
               {lightboxZoom > 1 ? (
                 <div className="absolute left-3 top-11 rounded-md bg-black/65 px-3 py-1 text-xs text-slate-100">
-                  Drag to move
+                  {messages.imageCanvas.dragToMove}
                 </div>
               ) : null}
 
@@ -359,7 +365,7 @@ export default function ImageCanvas({
                     onClick={() => adjustZoom(-0.2)}
                     disabled={lightboxZoom <= MIN_ZOOM}
                     className="rounded px-2 py-1 text-xs font-semibold text-slate-100 transition-colors hover:bg-black/80 disabled:cursor-not-allowed disabled:opacity-45"
-                    title="Zoom out"
+                    title={messages.imageCanvas.zoomOutTitle}
                   >
                     -
                   </button>
@@ -367,7 +373,7 @@ export default function ImageCanvas({
                     type="button"
                     onClick={resetLightboxView}
                     className="rounded px-2 py-1 text-xs font-semibold text-slate-100 transition-colors hover:bg-black/80"
-                    title="Reset zoom"
+                    title={messages.imageCanvas.resetZoomTitle}
                   >
                     {Math.round(lightboxZoom * 100)}%
                   </button>
@@ -376,7 +382,7 @@ export default function ImageCanvas({
                     onClick={() => adjustZoom(0.2)}
                     disabled={lightboxZoom >= MAX_ZOOM}
                     className="rounded px-2 py-1 text-xs font-semibold text-slate-100 transition-colors hover:bg-black/80 disabled:cursor-not-allowed disabled:opacity-45"
-                    title="Zoom in"
+                    title={messages.imageCanvas.zoomInTitle}
                   >
                     +
                   </button>
@@ -386,14 +392,14 @@ export default function ImageCanvas({
                   onClick={() => void handleDownload(lightboxImage, lightboxIndex ?? 0)}
                   className="rounded-md bg-black/65 px-3 py-1.5 text-xs font-semibold text-slate-100 transition-colors hover:bg-black/80"
                 >
-                  Download
+                  {messages.imageCanvas.download}
                 </button>
                 <button
                   type="button"
                   onClick={() => setLightboxIndex(null)}
                   className="rounded-md bg-black/65 px-3 py-1.5 text-xs font-semibold text-slate-100 transition-colors hover:bg-black/80"
                 >
-                  Close
+                  {messages.imageCanvas.close}
                 </button>
               </div>
 
@@ -403,7 +409,7 @@ export default function ImageCanvas({
                     type="button"
                     onClick={() => moveLightbox('prev')}
                     className="absolute left-3 top-1/2 -translate-y-1/2 rounded-full bg-black/65 p-2 text-white transition-colors hover:bg-black/80"
-                    aria-label="Previous image"
+                    aria-label={messages.imageCanvas.previousImage}
                   >
                     <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -413,7 +419,7 @@ export default function ImageCanvas({
                     type="button"
                     onClick={() => moveLightbox('next')}
                     className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-black/65 p-2 text-white transition-colors hover:bg-black/80"
-                    aria-label="Next image"
+                    aria-label={messages.imageCanvas.nextImage}
                   >
                     <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />

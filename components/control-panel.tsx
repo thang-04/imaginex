@@ -2,6 +2,7 @@
 
 import { type ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
+import { useLanguage } from '@/components/language-provider';
 import {
   Select,
   SelectContent,
@@ -31,14 +32,6 @@ function isImageRequiredAction(action: GenerationAction): boolean {
   return IMAGE_REQUIRED_ACTIONS.includes(action);
 }
 
-function getActionDescription(action: GenerationAction): string {
-  return ACTION_PRESETS.find((item) => item.value === action)?.prompt ?? '';
-}
-
-function getStyleDescription(style: GenerationSettings['style']): string {
-  return STYLE_PRESETS.find((item) => item.value === style)?.prompt ?? '';
-}
-
 function Field({
   label,
   children,
@@ -63,6 +56,8 @@ export default function ControlPanel({
   onReset,
   mode,
 }: ControlPanelProps) {
+  const { messages } = useLanguage();
+
   const handleChange = <K extends keyof GenerationSettings>(
     key: K,
     value: GenerationSettings[K],
@@ -73,17 +68,20 @@ export default function ControlPanel({
   return (
     <div className="space-y-4 xl:sticky xl:top-6">
       <div className="rounded-2xl border border-slate-700/60 bg-slate-950/45 p-5 backdrop-blur-xl">
-        <h2 className="text-sm font-semibold text-white">Quick Setup</h2>
-        <p className="mt-1 text-xs text-slate-400">Compact controls with clean selection states.</p>
+        <h2 className="text-sm font-semibold text-white">{messages.controlPanel.quickSetup}</h2>
+        <p className="mt-1 text-xs text-slate-400">{messages.controlPanel.quickSetupDescription}</p>
 
         <div className="mt-5 space-y-5">
-          <Field label="Action" description={getActionDescription(settings.action)}>
+          <Field
+            label={messages.controlPanel.action}
+            description={messages.presets.actions[settings.action].description}
+          >
             <Select
               value={settings.action}
               onValueChange={(value) => handleChange('action', value as GenerationAction)}
             >
               <SelectTrigger className="h-11 w-full rounded-xl border-slate-700 bg-slate-900/70 px-3 text-left text-sm text-slate-100">
-                <SelectValue placeholder="Select action" />
+                <SelectValue placeholder={messages.controlPanel.selectAction} />
               </SelectTrigger>
               <SelectContent className="border-slate-700 bg-slate-900 text-slate-100">
                 {ACTION_PRESETS.map((action) => {
@@ -96,8 +94,8 @@ export default function ControlPanel({
                       disabled={disabled}
                       className="rounded-md text-sm"
                     >
-                      {action.label}
-                      {disabled ? ' (requires image)' : ''}
+                      {messages.presets.actions[action.value].label}
+                      {disabled ? ` (${messages.controlPanel.requiresImageSuffix})` : ''}
                     </SelectItem>
                   );
                 })}
@@ -105,7 +103,10 @@ export default function ControlPanel({
             </Select>
           </Field>
 
-          <Field label="Style" description={getStyleDescription(settings.style)}>
+          <Field
+            label={messages.controlPanel.style}
+            description={messages.presets.styles[settings.style].description}
+          >
             <Select
               value={settings.style}
               onValueChange={(value) =>
@@ -113,19 +114,19 @@ export default function ControlPanel({
               }
             >
               <SelectTrigger className="h-11 w-full rounded-xl border-slate-700 bg-slate-900/70 px-3 text-left text-sm text-slate-100">
-                <SelectValue placeholder="Select style" />
+                <SelectValue placeholder={messages.controlPanel.selectStyle} />
               </SelectTrigger>
               <SelectContent className="border-slate-700 bg-slate-900 text-slate-100">
                 {STYLE_PRESETS.map((style) => (
                   <SelectItem key={style.value} value={style.value} className="rounded-md text-sm">
-                    {style.label}
+                    {messages.presets.styles[style.value].label}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </Field>
 
-          <Field label="Output Size">
+          <Field label={messages.controlPanel.outputSize}>
             <Select
               value={settings.imageSize}
               onValueChange={(value) =>
@@ -133,12 +134,12 @@ export default function ControlPanel({
               }
             >
               <SelectTrigger className="h-11 w-full rounded-xl border-slate-700 bg-slate-900/70 px-3 text-left text-sm text-slate-100">
-                <SelectValue placeholder="Select size" />
+                <SelectValue placeholder={messages.controlPanel.selectSize} />
               </SelectTrigger>
               <SelectContent className="border-slate-700 bg-slate-900 text-slate-100">
                 {SIZE_PRESETS.map((size) => (
                   <SelectItem key={size.value} value={size.value} className="rounded-md text-sm">
-                    {size.label} ({size.value})
+                    {messages.presets.sizes[size.value].label} ({size.value})
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -148,23 +149,31 @@ export default function ControlPanel({
       </div>
 
       <div className="rounded-2xl border border-slate-700/60 bg-slate-950/45 p-5 backdrop-blur-xl">
-        <h3 className="text-sm font-semibold text-white">Advanced</h3>
+        <h3 className="text-sm font-semibold text-white">{messages.controlPanel.advanced}</h3>
 
         <div className="mt-4 space-y-5">
           <div className="rounded-xl border border-slate-700/60 bg-slate-900/55 p-3.5">
             <div className="flex items-center justify-between">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-300">Steps</p>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-300">
+                {messages.controlPanel.steps}
+              </p>
               <span className="rounded-md bg-primary/15 px-2 py-0.5 text-xs font-semibold text-primary">
                 {LOCKED_STEPS}
               </span>
             </div>
-            <p className="mt-2 text-xs leading-5 text-slate-400">This model uses fixed step count.</p>
+            <p className="mt-2 text-xs leading-5 text-slate-400">
+              {messages.controlPanel.fixedStepsDescription}
+            </p>
           </div>
 
           <div className="space-y-2.5">
             <div className="flex items-center justify-between">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-300">Guidance</p>
-              <span className="text-xs font-semibold text-slate-100">{settings.guidance.toFixed(1)}</span>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-300">
+                {messages.controlPanel.guidance}
+              </p>
+              <span className="text-xs font-semibold text-slate-100">
+                {settings.guidance.toFixed(1)}
+              </span>
             </div>
             <input
               type="range"
@@ -175,11 +184,15 @@ export default function ControlPanel({
               onChange={(event) => handleChange('guidance', Number.parseFloat(event.target.value))}
               className="h-2 w-full cursor-pointer appearance-none rounded-full bg-slate-700 accent-primary"
             />
-            <p className="text-xs leading-5 text-slate-400">Higher value follows prompt more strictly.</p>
+            <p className="text-xs leading-5 text-slate-400">
+              {messages.controlPanel.guidanceDescription}
+            </p>
           </div>
 
           <div className="space-y-2.5">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-300">Seed</p>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-300">
+              {messages.controlPanel.seed}
+            </p>
             <div className="flex gap-2">
               <input
                 type="number"
@@ -189,17 +202,17 @@ export default function ControlPanel({
                   handleChange('seed', Number.isFinite(parsed) ? parsed : -1);
                 }}
                 className="h-11 w-full rounded-xl border border-slate-700 bg-slate-900/70 px-3 text-sm text-slate-100 outline-none transition-colors focus:border-primary"
-                placeholder="-1 for random"
+                placeholder={messages.controlPanel.seedPlaceholder}
               />
               <button
                 type="button"
                 onClick={() => handleChange('seed', Math.floor(Math.random() * 1000000))}
                 className="h-11 rounded-xl border border-slate-700 bg-slate-900/70 px-3 text-xs font-semibold text-slate-100 transition-colors hover:bg-slate-800"
               >
-                Random
+                {messages.controlPanel.random}
               </button>
             </div>
-            <p className="text-xs leading-5 text-slate-400">Use same seed to keep composition reproducible.</p>
+            <p className="text-xs leading-5 text-slate-400">{messages.controlPanel.seedDescription}</p>
           </div>
         </div>
       </div>
@@ -210,7 +223,7 @@ export default function ControlPanel({
         onClick={onReset}
         className="h-11 w-full rounded-xl border border-slate-700 bg-slate-900/70 text-slate-100 hover:bg-slate-800"
       >
-        Reset All Settings
+        {messages.controlPanel.resetAllSettings}
       </Button>
     </div>
   );
