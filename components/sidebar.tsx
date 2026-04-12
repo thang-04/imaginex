@@ -130,7 +130,7 @@ export default function Sidebar({
             </Button>
             <div className="mt-3 flex items-center justify-center gap-1.5 text-[11px] leading-none whitespace-nowrap text-slate-500">
               <Copyright className="h-3 w-3" />
-              <span>{'Built by Th\u1eafng Nguy\u1ec5n Duy'}</span>
+              <span>{'Built by Nguy\u1ec5n Duy Th\u1eafng'}</span>
             </div>
           </div>
         </>

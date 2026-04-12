@@ -22,6 +22,11 @@ type MessageShape = {
     imageToImage: string;
     sessionGallery: (count: number) => string;
     footer: string;
+    tokens: string;
+    tokenLimit: string;
+    rateLimitTitle: string;
+    rateLimitDescription: string;
+    resetTimerLabel: string;
   };
   promptInput: {
     promptLabel: string;
@@ -105,6 +110,7 @@ type MessageShape = {
     cloudflareNoImage: string;
     contentFlaggedTextToImage: string;
     contentFlaggedImageToImage: string;
+    rateLimited: string;
   };
   presets: PresetMessages;
 };
@@ -114,11 +120,16 @@ const messages = {
     app: {
       logoAlt: 'Logo Imaginex',
       title: 'Studio tạo ảnh AI',
-      subtitle: 'Viết prompt, tinh chỉnh, xem trước và so sánh trong cùng một quy trình.',
+      subtitle: 'Viết prompt, tinh chỉnh, xem trước và so sánh trong cùng một quy trình.\nSản phẩm tạo ra theo đơn đặt hàng của D và không nhằm mục đích thương mại 😆😆',
       textToImage: 'Văn bản sang ảnh',
       imageToImage: 'Ảnh sang ảnh',
       sessionGallery: (count) => `Thư viện phiên: ${count} ảnh`,
-      footer: 'Thực hiện bởi Thắng Nguyễn Duy',
+      footer: 'Thực hiện bởi Nguyễn Duy Thắng',
+      tokens: 'Tokens',
+      tokenLimit: 'Giới hạn Token',
+      rateLimitTitle: 'Đã hết giới hạn sử dụng trong ngày',
+      rateLimitDescription: 'Tuyệt vời, bạn đã sáng tạo hết công suất cho hôm nay! Gói Cloudflare Free hiện tại cấp 10,000 Neurons miễn phí mỗi ngày và bạn đã xài hết. Hạn mức sẽ được làm mới lúc 00:00 UTC. Hãy nghỉ ngơi và quay lại sau nhé!',
+      resetTimerLabel: 'Thời gian chờ đến 00:00 UTC',
     },
     promptInput: {
       promptLabel: 'Prompt',
@@ -208,6 +219,7 @@ const messages = {
         'Bộ lọc an toàn của Cloudflare đã chặn prompt này. Hãy dùng câu từ an toàn hơn, tránh nội dung nhạy cảm, hoặc chọn style hay action ít rủi ro hơn.',
       contentFlaggedImageToImage:
         'Bộ lọc an toàn của Cloudflare đã chặn prompt hoặc ảnh đầu vào này. Hãy dùng prompt an toàn hơn, tránh nội dung nhạy cảm, hoặc đổi ảnh đầu vào.',
+      rateLimited: 'Đã hết giới hạn ngày của Cloudflare. Hẹn bạn vào ngày mai!',
     },
     presets: {
       actions: {
@@ -287,11 +299,16 @@ const messages = {
     app: {
       logoAlt: 'Imaginex logo',
       title: 'AI Image Studio',
-      subtitle: 'Prompt, tweak, preview, and compare in one workflow.',
+      subtitle: 'Produced by special order for D and is not for commercial use 😆😆',
       textToImage: 'Text to Image',
       imageToImage: 'Image to Image',
       sessionGallery: (count) => `Session gallery: ${count} image${count === 1 ? '' : 's'}`,
-      footer: 'Built by Thắng Nguyễn Duy',
+      footer: 'Built by Nguyễn Duy Thắng',
+      tokens: 'Tokens',
+      tokenLimit: 'Token Limit',
+      rateLimitTitle: 'Daily Limit Reached',
+      rateLimitDescription: 'Awesome, you have exhausted your creative power for today! You have used up the daily 10,000 free Neurons on Cloudflare. The limit will magically reset at 00:00 UTC.',
+      resetTimerLabel: 'Time until 00:00 UTC reset',
     },
     promptInput: {
       promptLabel: 'Prompt',
@@ -381,6 +398,7 @@ const messages = {
         'Cloudflare safety filter blocked this prompt. Try safer wording, avoid sensitive terms, or switch to a less risky style or action.',
       contentFlaggedImageToImage:
         'Cloudflare safety filter blocked this prompt or input image. Try a safer prompt, avoid sensitive terms, or change the input image.',
+      rateLimited: 'Cloudflare daily limit exhausted. Please try again tomorrow!',
     },
     presets: {
       actions: {

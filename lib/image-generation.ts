@@ -205,3 +205,12 @@ export function toImageDataUrl(image: string, mimeType = 'image/png'): string {
 
   return `data:${mimeType};base64,${normalized}`;
 }
+
+export function estimateNeuronCost(width: number, height: number, steps: number): number {
+  const tiles = Math.ceil(width / 512) * Math.ceil(height / 512);
+  const baseTileCost = tiles * 4.8;
+  const stepsCost = steps * 9.6 * tiles;
+  
+  return Math.ceil(baseTileCost + stepsCost);
+}
+

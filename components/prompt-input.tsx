@@ -17,11 +17,13 @@ interface PromptInputProps {
     action: GenerationAction;
     style: GenerationStyle;
   };
+  onRateLimit?: () => void;
 }
 
 type RewritePromptResponse = {
   prompt?: string;
   error?: string;
+  code?: string;
 };
 
 export default function PromptInput({
@@ -29,6 +31,7 @@ export default function PromptInput({
   isGenerating,
   mode,
   promptContext,
+  onRateLimit,
 }: PromptInputProps) {
   const { locale, messages } = useLanguage();
   const [prompt, setPrompt] = useState('');
@@ -124,6 +127,10 @@ export default function PromptInput({
       const data = (await response.json()) as RewritePromptResponse;
 
       if (!response.ok) {
+        if (data.code === 'RATE_LIMITED') {
+          onRateLimit?.();
+          return;
+        }
         throw new Error(data.error || messages.errors.promptRewriteFailed);
       }
 

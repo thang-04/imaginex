@@ -1,4 +1,4 @@
-export type CloudflareErrorCode = 'CONTENT_FLAGGED' | 'CLOUDFLARE_REQUEST_FAILED';
+export type CloudflareErrorCode = 'CONTENT_FLAGGED' | 'CLOUDFLARE_REQUEST_FAILED' | 'RATE_LIMITED';
 
 type CloudflareImageResponse = {
   success?: boolean;
@@ -102,6 +102,15 @@ function isContentFlaggedMessage(message: string): boolean {
   );
 }
 
+function isRateLimitMessage(message: string): boolean {
+  const normalized = message.toLowerCase();
+  return (
+    normalized.includes('daily free allocation') ||
+    normalized.includes('used up') ||
+    normalized.includes('rate limit')
+  );
+}
+
 function normalizeFailureStatus(status: number): number {
   return status >= 400 && status <= 599 ? status : 502;
 }
@@ -125,6 +134,15 @@ function buildFailure(
       message: errorMessage,
       requestId,
       status: 422,
+    });
+  }
+
+  if (isRateLimitMessage(providerMessage) || status === 429) {
+    return new CloudflareGenerationError({
+      code: 'RATE_LIMITED',
+      message: 'You have exhausted your daily Cloudflare limits.',
+      requestId,
+      status: 429,
     });
   }
 

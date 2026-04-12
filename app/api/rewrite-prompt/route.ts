@@ -264,6 +264,13 @@ export async function POST(request: Request) {
       const errorMessage =
         getCloudflareErrorMessage(payload) || rawResponse || messages.errors.promptRewriteFailed;
 
+      if (cloudflareResponse.status === 429 || errorMessage.toLowerCase().includes('daily free allocation')) {
+        return NextResponse.json(
+          { error: messages.errors.rateLimited, code: 'RATE_LIMITED' },
+          { status: 429 }
+        );
+      }
+
       return NextResponse.json(
         { error: errorMessage },
         { status: cloudflareResponse.status || 502 },

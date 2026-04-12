@@ -140,12 +140,17 @@ export async function POST(request: Request) {
     const messages = getMessages(locale);
 
     if (error instanceof CloudflareGenerationError) {
-      const localizedError =
-        error.code === 'CONTENT_FLAGGED'
-          ? mode === 'image-to-image'
-            ? messages.errors.contentFlaggedImageToImage
-            : messages.errors.contentFlaggedTextToImage
-          : localizeServerMessage(error.message, messages);
+      let localizedError;
+      
+      if (error.code === 'CONTENT_FLAGGED') {
+        localizedError = mode === 'image-to-image'
+          ? messages.errors.contentFlaggedImageToImage
+          : messages.errors.contentFlaggedTextToImage;
+      } else if (error.code === 'RATE_LIMITED') {
+        localizedError = messages.errors.rateLimited;
+      } else {
+        localizedError = localizeServerMessage(error.message, messages);
+      }
 
       return NextResponse.json(
         {
