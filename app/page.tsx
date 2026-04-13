@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import BirthdayGate from '@/components/birthday-gate';
 import { Copyright, Zap, Clock, Timer } from 'lucide-react';
 import ControlPanel from '@/components/control-panel';
 import ImageCanvas from '@/components/image-canvas';
@@ -10,6 +11,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { useTokenLimit } from '@/hooks/use-token-limit';
+import { useImageHistory } from '@/hooks/use-image-history';
 import {
   DEFAULT_SETTINGS,
   parseImageSize,
@@ -66,7 +68,7 @@ export default function Home() {
   const { used, limit, remaining, isLoaded, increment } = useTokenLimit();
   const [mode, setMode] = useState<'text-to-image' | 'image-to-image'>('text-to-image');
   const [isGenerating, setIsGenerating] = useState(false);
-  const [generatedImages, setGeneratedImages] = useState<string[]>([]);
+  const { generatedImages, setGeneratedImages } = useImageHistory();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [showRateLimitModal, setShowRateLimitModal] = useState(false);
   const [settings, setSettings] = useState<GenerationSettings>(DEFAULT_SETTINGS);
@@ -143,7 +145,7 @@ export default function Home() {
         throw new Error(messages.errors.apiResponseMissingImage);
       }
 
-      setGeneratedImages((previous) => [imageUrl, ...previous].slice(0, 24));
+      setGeneratedImages((previous) => [imageUrl, ...previous]);
 
       const usedWidth = data.meta?.width || width;
       const usedHeight = data.meta?.height || height;
@@ -159,6 +161,7 @@ export default function Home() {
   };
 
   return (
+    <BirthdayGate>
     <div className="dark min-h-screen bg-transparent text-foreground">
       <div className="fixed inset-0 -z-10 overflow-hidden">
         <div className="absolute inset-0 bg-brand-gradient opacity-85" />
@@ -269,12 +272,14 @@ export default function Home() {
                 style: settings.style,
               }}
               onRateLimit={() => setShowRateLimitModal(true)}
+              onTokenConsume={(tokens) => increment(tokens)}
             />
             <ImageCanvas
               generatedImages={generatedImages}
               isGenerating={isGenerating}
               mode={mode}
               onClearHistory={() => setGeneratedImages([])}
+              onDeleteImage={(index) => setGeneratedImages((prev) => prev.filter((_, i) => i !== index))}
             />
           </section>
 
@@ -320,5 +325,6 @@ export default function Home() {
         </DialogContent>
       </Dialog>
     </div>
+    </BirthdayGate>
   );
 }

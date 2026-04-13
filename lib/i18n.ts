@@ -54,6 +54,11 @@ type MessageShape = {
     livePreview: string;
     sessionImages: (count: number) => string;
     download: string;
+    deleteImage: string;
+    deleteConfirmTitle: string;
+    deleteConfirmDescription: string;
+    cancel: string;
+    confirmDelete: string;
     clearGallery: string;
     clickToPreview: string;
     generatingNextVariation: string;
@@ -158,6 +163,11 @@ const messages = {
       livePreview: 'Xem trước trực tiếp',
       sessionImages: (count) => `${count} ảnh trong phiên này`,
       download: 'Tải xuống',
+      deleteImage: 'Xóa ảnh',
+      deleteConfirmTitle: 'Xác nhận xóa ảnh',
+      deleteConfirmDescription: 'Bạn có chắc chắn muốn xóa ảnh này khỏi lịch sử? Hành động này không thể hoàn tác.',
+      cancel: 'Hủy',
+      confirmDelete: 'Xóa',
       clearGallery: 'Xóa thư viện',
       clickToPreview: 'Bấm để xem lớn',
       generatingNextVariation: 'Đang tạo biến thể tiếp theo...',
@@ -337,6 +347,11 @@ const messages = {
       livePreview: 'Live Preview',
       sessionImages: (count) => `${count} image${count === 1 ? '' : 's'} in this session`,
       download: 'Download',
+      deleteImage: 'Delete image',
+      deleteConfirmTitle: 'Delete image',
+      deleteConfirmDescription: 'Are you sure you want to delete this image? This action cannot be undone.',
+      cancel: 'Cancel',
+      confirmDelete: 'Delete',
       clearGallery: 'Clear Gallery',
       clickToPreview: 'Click to preview',
       generatingNextVariation: 'Generating next variation...',

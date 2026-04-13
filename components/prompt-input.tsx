@@ -18,6 +18,7 @@ interface PromptInputProps {
     style: GenerationStyle;
   };
   onRateLimit?: () => void;
+  onTokenConsume?: (tokens: number) => void;
 }
 
 type RewritePromptResponse = {
@@ -32,6 +33,7 @@ export default function PromptInput({
   mode,
   promptContext,
   onRateLimit,
+  onTokenConsume,
 }: PromptInputProps) {
   const { locale, messages } = useLanguage();
   const [prompt, setPrompt] = useState('');
@@ -140,6 +142,7 @@ export default function PromptInput({
       }
 
       setPrompt(rewrittenPrompt);
+      onTokenConsume?.(12); // Estimated ~12 Neurons for text generation (e.g., LLaMA 3 / GLM-4)
       requestAnimationFrame(() => {
         promptInputRef.current?.focus();
       });

@@ -181,7 +181,21 @@ function buildSystemInstruction(): string {
     'Add concrete visual details: composition, framing, lighting, color palette, textures, mood, and style cues when relevant.',
     'Keep it concise (1-3 sentences).',
     'Return only the rewritten prompt. No markdown, no explanations, no labels.',
-  ].join(' ');
+    '',
+    'CRITICAL SAFETY RULES — The output prompt will be sent to an image generation API with strict keyword-based content filters.',
+    'You MUST follow these rules to avoid triggering the safety filter:',
+    '1. NEVER use words related to violence, gore, weapons, or destruction (e.g. violent, violently, destroy, kill, blood, wound, attack, assault, gun, knife, war, battle, explosion, bomb, dead, death, corpse).',
+    '2. NEVER use words related to nudity, sexual content, or suggestive themes.',
+    '3. NEVER use words related to drugs, self-harm, or hate speech.',
+    '4. Replace intense/aggressive words with neutral physics or motion alternatives. Examples:',
+    '   - "violently crashing" → "powerfully splashing"',
+    '   - "destroying buildings" → "towering over buildings"',
+    '   - "chaotic destruction" → "dramatic energy"',
+    '   - "explosive impact" → "dynamic burst of light"',
+    '   - "fighting" → "facing each other"',
+    '5. Focus on visual beauty, composition, and artistic quality instead of aggressive action.',
+    '6. If the user request inherently describes unsafe content, reinterpret it as an artistic/abstract scene that captures the same mood safely.',
+  ].join('\n');
 }
 
 function buildUserInstruction({

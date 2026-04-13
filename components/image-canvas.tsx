@@ -2,6 +2,16 @@
 
 import { type PointerEvent as ReactPointerEvent, useEffect, useRef, useState } from 'react';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { useLanguage } from '@/components/language-provider';
 
 interface ImageCanvasProps {
@@ -9,6 +19,7 @@ interface ImageCanvasProps {
   isGenerating: boolean;
   mode: 'text-to-image' | 'image-to-image';
   onClearHistory?: () => void;
+  onDeleteImage?: (index: number) => void;
 }
 
 const MIN_ZOOM = 0.5;
@@ -28,6 +39,7 @@ export default function ImageCanvas({
   isGenerating,
   mode,
   onClearHistory,
+  onDeleteImage,
 }: ImageCanvasProps) {
   const { messages } = useLanguage();
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -35,6 +47,7 @@ export default function ImageCanvas({
   const [lightboxZoom, setLightboxZoom] = useState(1);
   const [lightboxPan, setLightboxPan] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
+  const [deleteIndex, setDeleteIndex] = useState<number | null>(null);
   const dragStateRef = useRef<{
     pointerId: number;
     startX: number;
@@ -228,6 +241,15 @@ export default function ImageCanvas({
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          {onDeleteImage ? (
+            <button
+              type="button"
+              onClick={() => setDeleteIndex(selectedIndex)}
+              className="rounded-lg border border-red-900/50 bg-red-950/40 px-3 py-2 text-xs font-semibold text-red-400 transition-colors hover:bg-red-900/60 hover:text-red-300"
+            >
+              {messages.imageCanvas.deleteImage}
+            </button>
+          ) : null}
           <button
             type="button"
             onClick={() => void handleDownload(selectedImage, selectedIndex)}
@@ -235,15 +257,7 @@ export default function ImageCanvas({
           >
             {messages.imageCanvas.download}
           </button>
-          {onClearHistory ? (
-            <button
-              type="button"
-              onClick={onClearHistory}
-              className="rounded-lg border border-slate-700 bg-slate-900/70 px-3 py-2 text-xs font-semibold text-slate-300 transition-colors hover:bg-slate-800"
-            >
-              {messages.imageCanvas.clearGallery}
-            </button>
-          ) : null}
+
         </div>
       </div>
 
@@ -278,28 +292,48 @@ export default function ImageCanvas({
         </h4>
         <div className="mt-3 grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-4">
           {generatedImages.map((image, index) => (
-            <button
+            <div
               key={`${image.slice(0, 48)}-${index}`}
-              type="button"
-              onClick={() => openLightbox(index)}
               className={`group relative overflow-hidden rounded-xl border transition-all ${
                 selectedIndex === index
                   ? 'border-primary ring-2 ring-primary/45'
                   : 'border-slate-700/70 hover:border-slate-500'
               }`}
             >
-              <div className="aspect-square w-full bg-slate-900">
-                <img
-                  src={image}
-                  alt={messages.imageCanvas.generatedImageAlt(index)}
-                  className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
-                />
-              </div>
-              <div className="absolute inset-x-0 bottom-0 flex items-center justify-between bg-black/55 px-2 py-1 text-[11px] text-slate-200">
-                <span>#{index + 1}</span>
-                <span>{messages.imageCanvas.view}</span>
-              </div>
-            </button>
+              <button
+                type="button"
+                onClick={() => openLightbox(index)}
+                className="block w-full h-full text-left"
+              >
+                <div className="aspect-square w-full bg-slate-900">
+                  <img
+                    src={image}
+                    alt={messages.imageCanvas.generatedImageAlt(index)}
+                    className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+                  />
+                </div>
+                <div className="absolute inset-x-0 bottom-0 flex items-center justify-between bg-black/60 px-2 py-1 text-[11px] text-slate-200">
+                  <span>#{index + 1}</span>
+                  <span>{messages.imageCanvas.view}</span>
+                </div>
+              </button>
+              
+              {onDeleteImage ? (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setDeleteIndex(index);
+                  }}
+                  title={messages.imageCanvas.deleteImage}
+                  className="absolute right-1.5 top-1.5 rounded-full bg-black/60 p-1.5 text-slate-300 opacity-0 transition-all hover:bg-red-500/90 hover:text-white group-hover:opacity-100"
+                >
+                  <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              ) : null}
+            </div>
           ))}
         </div>
       </div>
@@ -390,10 +424,21 @@ export default function ImageCanvas({
                 <button
                   type="button"
                   onClick={() => void handleDownload(lightboxImage, lightboxIndex ?? 0)}
-                  className="rounded-md bg-black/65 px-3 py-1.5 text-xs font-semibold text-slate-100 transition-colors hover:bg-black/80"
+                  className="rounded-md bg-black/65 px-3 py-1.5 text-xs font-semibold text-slate-100 transition-colors hover:bg-slate-800"
                 >
                   {messages.imageCanvas.download}
                 </button>
+                {onDeleteImage && lightboxIndex !== null ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setDeleteIndex(lightboxIndex);
+                    }}
+                    className="rounded-md bg-red-900/80 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-red-800/90"
+                  >
+                    {messages.imageCanvas.deleteImage}
+                  </button>
+                ) : null}
                 <button
                   type="button"
                   onClick={() => setLightboxIndex(null)}
@@ -431,6 +476,39 @@ export default function ImageCanvas({
           ) : null}
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={deleteIndex !== null} onOpenChange={(open) => !open && setDeleteIndex(null)}>
+        <AlertDialogContent className="border-slate-700 bg-slate-900 shadow-2xl shadow-black sm:max-w-md">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-white">
+              {messages.imageCanvas.deleteConfirmTitle}
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-slate-400">
+              {messages.imageCanvas.deleteConfirmDescription}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="mt-5 flex-col gap-3 sm:flex-row sm:justify-end sm:gap-4">
+            <AlertDialogAction
+              className="bg-red-600 text-white hover:bg-red-700"
+              onClick={() => {
+                if (deleteIndex !== null && onDeleteImage) {
+                  onDeleteImage(deleteIndex);
+                  
+                  if (lightboxIndex === deleteIndex) {
+                    setLightboxIndex(null);
+                  }
+                }
+                setDeleteIndex(null);
+              }}
+            >
+              {messages.imageCanvas.confirmDelete}
+            </AlertDialogAction>
+            <AlertDialogCancel className="mt-0 border-slate-700 text-slate-300 hover:bg-slate-800 hover:text-white">
+              {messages.imageCanvas.cancel}
+            </AlertDialogCancel>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

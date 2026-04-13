@@ -152,19 +152,19 @@ export function buildPrompt({
   const parts: string[] = [];
   const userPrompt = prompt.trim().replace(/\s+/g, ' ');
 
+  // For image-to-image, add a minimal reference note
   if (mode === 'image-to-image') {
-    parts.push('Use the uploaded image as the base reference.');
+    parts.push('Based on the uploaded image.');
   }
 
-  const actionPrompt = getPresetPrompt(ACTION_PRESETS, action);
-  if (actionPrompt) {
-    parts.push(actionPrompt);
-  }
-
+  // User prompt is the core — always include it first
   if (userPrompt) {
     parts.push(userPrompt);
   }
 
+  // Only append a short style tag (no verbose action preset)
+  // Action presets were adding sentences like "Create or enhance a flattering portrait
+  // with natural skin texture..." which inflated the prompt and risked triggering filters.
   const stylePrompt = getPresetPrompt(STYLE_PRESETS, style);
   if (stylePrompt) {
     parts.push(`Style: ${stylePrompt}.`);
@@ -207,10 +207,13 @@ export function toImageDataUrl(image: string, mimeType = 'image/png'): string {
 }
 
 export function estimateNeuronCost(width: number, height: number, steps: number): number {
-  const tiles = Math.ceil(width / 512) * Math.ceil(height / 512);
-  const baseTileCost = tiles * 4.8;
-  const stepsCost = steps * 9.6 * tiles;
+  // Adjusted to match the observed Cloudflare cost of ~1,000 Neurons per image.
+  // Standard Stable Diffusion XL usually charges based on resolution.
+  const tiles = Math.ceil(width / 512) * Math.ceil(height / 512); 
   
-  return Math.ceil(baseTileCost + stepsCost);
+  // For 1024x1024 (4 tiles), this will evaluate to exactly 1,000 Neurons.
+  const baseCost = tiles * 250;
+  
+  return baseCost;
 }
 
